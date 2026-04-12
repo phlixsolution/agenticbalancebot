@@ -26,7 +26,7 @@ import FreeCAD as App
 import Part
 import math
 
-BASE = "/home/phlix/claude-spaces/NewBalanceBot/CAD_BalanceBot"
+BASE = "/home/phlix/workspaces/NewBalanceBot_planung/CAD_BalanceBot"
 Vec  = App.Vector
 
 # Geometry constants

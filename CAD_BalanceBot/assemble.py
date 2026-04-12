@@ -14,8 +14,9 @@ NOTE — two parts use procedural geometry (replace when native files are conver
 
 import FreeCAD as App
 import Part
+import math
 
-BASE = "/home/phlix/claude-spaces/NewBalanceBot/CAD_BalanceBot"
+BASE = "/home/phlix/workspaces/NewBalanceBot_planung/CAD_BalanceBot"
 OUT  = BASE + "/BalanceBotAssembly.FCStd"
 
 Vec = App.Vector
@@ -23,7 +24,6 @@ Rot = App.Rotation
 Plc = App.Placement
 
 def load_body(path):
-    """Return a copy of the final Body shape from an FCStd file."""
     d = App.openDocument(path)
     s = d.getObject("Body").Shape.copy()
     App.closeDocument(d.Name)
@@ -34,13 +34,56 @@ def load_step(path):
     s.read(path)
     return s
 
-def load_wheel(path):
-    """Return (hub_shape, tire_shape) from Pololu_Wheel_90x10.FCStd."""
-    d = App.openDocument(path)
-    hub  = d.getObject("Wheel_Hub").Shape.copy()
-    tire = d.getObject("Wheel_Tire").Shape.copy()
-    App.closeDocument(d.Name)
-    return hub, tire
+def _rot_z(shape, deg):
+    mat = App.Matrix()
+    mat.rotateZ(math.radians(deg))
+    return shape.transformGeometry(mat)
+
+def make_wheel_hub():
+    RIM_OR = 37.0; RIM_IR = 34.0; HUB_R = 13.0
+    SPOKE_W = 4.0; SPOKE_H = 4.0; SPOKE_Z = 3.0
+    rim = Part.makeCylinder(RIM_OR, 10.0).cut(Part.makeCylinder(RIM_IR, 10.0))
+    hub_plate = Part.makeCylinder(HUB_R, SPOKE_H, Vec(0, 0, SPOKE_Z))
+    hw = SPOKE_W / 2.0
+    box = Part.makeBox(RIM_IR - HUB_R, SPOKE_W, SPOKE_H, Vec(HUB_R, -hw, SPOKE_Z))
+    ch = Part.makeCylinder(hw, SPOKE_H, Vec(HUB_R, 0.0, SPOKE_Z))
+    cr = Part.makeCylinder(hw, SPOKE_H, Vec(RIM_IR, 0.0, SPOKE_Z))
+    spoke0 = box.fuse(ch).fuse(cr)
+    spokes = spoke0.copy()
+    spokes = spokes.fuse(_rot_z(spoke0, 60.0))
+    spokes = spokes.fuse(_rot_z(spoke0, 120.0))
+    spokes = spokes.fuse(_rot_z(spoke0, 180.0))
+    spokes = spokes.fuse(_rot_z(spoke0, 240.0))
+    spokes = spokes.fuse(_rot_z(spoke0, 300.0))
+    body = rim.fuse(hub_plate).fuse(spokes)
+    body = body.cut(Part.makeCylinder(1.5, SPOKE_H + 2.0, Vec(0, 0, SPOKE_Z - 1.0)))
+    body = body.cut(Part.makeBox(4.0, 0.6, SPOKE_H + 2.0, Vec(-2.0, 1.0, SPOKE_Z - 1.0)))
+    hz = SPOKE_Z - 0.5; hh = SPOKE_H + 1.0
+    body = body.cut(Part.makeCylinder(1.25, hh, Vec(6.35, 0.0, hz)))
+    body = body.cut(Part.makeCylinder(1.25, hh, Vec(-6.35, 0.0, hz)))
+    r2 = 9.55 * math.sqrt(0.5)
+    body = body.cut(Part.makeCylinder(1.25, hh, Vec(r2, r2, hz)))
+    body = body.cut(Part.makeCylinder(1.25, hh, Vec(-r2, r2, hz)))
+    body = body.cut(Part.makeCylinder(1.25, hh, Vec(-r2, -r2, hz)))
+    body = body.cut(Part.makeCylinder(1.25, hh, Vec(r2, -r2, hz)))
+    return body
+
+def make_wheel_tire():
+    shell = Part.makeCylinder(45.0, 10.0).cut(Part.makeCylinder(37.0, 10.0))
+    sp = 10.0 / 12.0
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*0.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*0.5-0.3))))
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*1.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*1.5-0.3))))
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*2.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*2.5-0.3))))
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*3.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*3.5-0.3))))
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*4.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*4.5-0.3))))
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*5.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*5.5-0.3))))
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*6.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*6.5-0.3))))
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*7.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*7.5-0.3))))
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*8.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*8.5-0.3))))
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*9.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*9.5-0.3))))
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*10.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*10.5-0.3))))
+    shell = shell.cut(Part.makeCylinder(45.0, 0.6, Vec(0,0,sp*11.5-0.3)).cut(Part.makeCylinder(44.5, 0.6, Vec(0,0,sp*11.5-0.3))))
+    return shell
 
 
 def add_part(doc, name, shape, color, pos=(0,0,0), rot=None):
@@ -127,34 +170,32 @@ add_part(doc, "N20_motor_L",
 # ── 9. Wheels (Pololu 90×10mm, product #1439) ────────────────────────────────
 # Loaded from Pololu_Wheel_90x10.FCStd (run create_wheel.py to regenerate).
 # Wheel geometry: axis along Z, inner face at Z=0, outer face at Z=10,
-#                 hub boss Z=-1 to Z=11 (1 mm proud each side).
+#                 bore: Z=2..8 (6 mm engagement depth).
 #
-# Shaft tips (from GUI-adjusted motor positions):
-#   Right motor: shaft tip world (55.9, -0.6, -11.0) — shaft → +X
-#   Left  motor: shaft tip world (-56.9, -0.4, -11.0) — shaft → -X
+# Motor shaft axis (verified from N20 STEP: shaft at local Y=0, Z=0):
+#   Right motor: shaft axis world Y=-0.6, Z=-14.7 — tip at world X=+55.9
+#   Left  motor: shaft axis world Y=-0.4, Z=-14.7 — tip at world X=-56.9
 #
-# Ry(+90°): local Z → world +X  →  inner face (Z=0) at Px, outer face at Px+10
-# Ry(-90°): local Z → world -X  →  inner face (Z=0) at Px, outer face at Px-10
+# Placement strategy: bore outer end (local Z=8) coincides with shaft tip.
+#   Ry(+90°):  local Z → world +X  →  bore outer end at Px+8  → Px = 55.9 - 8 = 47.9
+#   Ry(-90°):  local Z → world -X  →  bore outer end at Px-8  → Px = -56.9 + 8 = -48.9
 #
-# Right: Px=55.9  (wheel spans X [55.9, 65.9], extending outward from robot)
-# Left:  Px=-56.9 (wheel spans X [-66.9, -56.9], extending outward)
-WHEEL_FCStd = BASE + "/Pololu_Wheel_90x10.FCStd"
-wheel_hub_shape, wheel_tire_shape = load_wheel(WHEEL_FCStd)
-
+# Right: Px=47.9  (wheel spans X [47.9, 57.9], bore engages X [49.9, 55.9])
+# Left:  Px=-48.9 (wheel spans X [-58.9, -48.9], bore engages X [-56.9, -50.9])
 rot_ry_pos90 = Rot(Vec(0, 1, 0),  90)   # Z → +X
 rot_ry_neg90 = Rot(Vec(0, 1, 0), -90)   # Z → -X
 
-# Right wheel
-add_part(doc, "Wheel_R_Hub",  wheel_hub_shape,  (0.95, 0.95, 0.95),
-         pos=(55.9, -0.6, -11.0), rot=rot_ry_pos90)
-add_part(doc, "Wheel_R_Tire", wheel_tire_shape, (0.10, 0.10, 0.10),
-         pos=(55.9, -0.6, -11.0), rot=rot_ry_pos90)
+# Right wheel — hub and tire at identical placement
+add_part(doc, "Wheel_R_Hub",  make_wheel_hub(),  (0.95, 0.95, 0.95),
+         pos=(47.9, -0.6, -14.7), rot=rot_ry_pos90)
+add_part(doc, "Wheel_R_Tire", make_wheel_tire(), (0.10, 0.10, 0.10),
+         pos=(47.9, -0.6, -14.7), rot=rot_ry_pos90)
 
-# Left wheel
-add_part(doc, "Wheel_L_Hub",  wheel_hub_shape,  (0.95, 0.95, 0.95),
-         pos=(-56.9, -0.4, -11.0), rot=rot_ry_neg90)
-add_part(doc, "Wheel_L_Tire", wheel_tire_shape, (0.10, 0.10, 0.10),
-         pos=(-56.9, -0.4, -11.0), rot=rot_ry_neg90)
+# Left wheel — hub and tire at identical placement
+add_part(doc, "Wheel_L_Hub",  make_wheel_hub(),  (0.95, 0.95, 0.95),
+         pos=(-48.9, -0.4, -14.7), rot=rot_ry_neg90)
+add_part(doc, "Wheel_L_Tire", make_wheel_tire(), (0.10, 0.10, 0.10),
+         pos=(-48.9, -0.4, -14.7), rot=rot_ry_neg90)
 
 # ── 10. Samsung INR18650-25R battery cell ─────────────────────────────────────
 # Loaded from Samsung INR18650-25R.stp

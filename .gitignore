@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.idea/
+*.swp
+*.swo
+
+# Build artifacts
+*.o
+*.d
+*.map
+*.elf
+*.bin
+*.hex
+
+# FreeCAD backups (keep .FCStd, ignore autosave backups)
+*.FCBak
+
+# Measurement data (large CSVs and generated plots — keep raw data in messungen/ but not binaries)
+*.png

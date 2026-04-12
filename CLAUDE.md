@@ -1,0 +1,108 @@
+# BalanceBot — Claude Code Instructions
+
+This is a two-wheeled self-balancing robot (inverted pendulum) built on an Arduino Nano 33 IoT.
+Two collaborators use Claude Code on this repo. These instructions apply to both sessions.
+
+---
+
+## Repo layout
+
+```
+Balancebot_code/
+  src/balance/        Modular firmware (active development)
+  src/balance.cpp     balance_v1 — monolithic reference, do not edit
+  src/tests/          Test sketches (carrier_timing, imu_latency, deadzone_id)
+  python/             acquire → process → analyze pipeline
+  docs/               commissioning_plan.md, sign_conventions.md, system_model.md
+  messungen/          Logged measurement data (CSV + plots)
+CAD_BalanceBot/       FreeCAD assembly and STEP files
+```
+
+---
+
+## Branching strategy
+
+- `main` is protected. Nothing is committed directly to main.
+- All work happens on short-lived feature branches.
+- Branch naming:
+  - `feature/<description>` — new functionality
+  - `fix/<description>` — bug fixes
+  - `docs/<description>` — documentation only
+  - `chore/<description>` — config, tooling, cleanup
+- Open a PR to merge into main. The other collaborator reviews and approves before merge.
+- Delete the branch after it is merged.
+
+---
+
+## Commit message format
+
+```
+<type>: <description>
+```
+
+Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `ci`
+
+Examples:
+- `feat: add back-calculation anti-windup to position PID`
+- `fix: correct encoder sign for right motor`
+- `docs: complete Phase 3 deadzone checklist entries`
+- `chore: update .gitignore to exclude venv`
+
+---
+
+## Hardware-critical parameters — ask before changing
+
+These values in `Balancebot_code/src/balance/config.h` have direct physical consequences.
+Do not change them without measuring or discussing first:
+
+| Parameter | Current value | Why it matters |
+|-----------|--------------|----------------|
+| `MAX_DUTY` | 45% | Motor driver is rated 500 mA; stall current is 1.03 A. Exceeding this blows the driver. |
+| `DEADZONE_DUTY` | 10% (estimate) | Needs deadzone_id test to confirm. Wrong value causes oscillation or no movement. |
+| `FALLEN_ANGLE_DEG` | 45° | Safety cutoff. Lowering it cuts power too early; raising it risks the bot crashing hard. |
+| `LOOP_PERIOD_MS` | 10 ms | Control loop period. Going below 10 ms risks overrunning the IMU read time. |
+| `KP_ANGLE`, `KD_ANGLE` | 2.0, 0.1 | Phase 6 starting values. Tune incrementally per commissioning_plan.md. |
+| `KI_ANGLE` | 0.0 | Keep at 0 until PD is stable (commissioning_plan.md Phase 6). |
+| `COG_HEIGHT_M` | 0.030 (estimate) | Needs knife-edge test (Phase 4). Used in system model. |
+
+---
+
+## Commissioning phases — complete in order
+
+See `Balancebot_code/docs/commissioning_plan.md` for the full checklist.
+
+**Never skip a phase.** Each phase validates the assumptions the next phase depends on.
+
+**During any motor test: wheels must be off the ground** until Phase 5+.
+
+Current status (update this as phases complete):
+- [ ] Phase 0 — Hardware verification
+- [ ] Phase 1 — Motor Carrier timing
+- [ ] Phase 2 — IMU mode decision
+- [ ] Phase 3 — Deadzone identification
+- [ ] Phase 4 — CoG measurement
+- [ ] Phase 5 — System model
+- [ ] Phase 6 — First balance attempt
+- [ ] Phase 7 — Position controller
+
+---
+
+## Python toolchain
+
+The active pipeline is `acquire.py → process.py → analyze.py`.
+The older standalone scripts (`plot_serial.py`, `serial_to_csv.py`, etc.) are superseded — do not extend them.
+
+Run from `Balancebot_code/`:
+```bash
+python python/acquire.py          # record from serial
+python python/process.py ...      # validate and compute derived signals
+python python/analyze.py ...      # plot
+```
+
+---
+
+## What not to touch
+
+- `src/balance.cpp` (balance_v1) — reference implementation, kept for comparison
+- `src/*.cpp.bak` files — historical snapshots, do not edit or delete
+- `messungen/` — measurement data, do not reformat or delete existing files

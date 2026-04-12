@@ -6,3 +6,4 @@ New ADRs go in `docs/adr/NNNN-slug.md` and are indexed here.
 | ADR | Title | Status | Date |
 |-----|-------|--------|------|
 | [0001](0001-modular-firmware-layout.md) | Modular firmware layout supersedes balance_v1 | accepted | 2026-04-13 |
+| [0002](0002-messungen-storage-split.md) | Measurement data split between NextCloud and git | accepted | 2026-04-13 |

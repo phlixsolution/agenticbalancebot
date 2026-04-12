@@ -54,7 +54,7 @@ Alternatives considered:
 | `encoder.{h,cpp}` | Encoder read and position tracking |
 | `pid.{h,cpp}` | PID with anti-windup |
 | `logger.{h,cpp}` | CSV serial output |
-| `state_machine.h` | States: INIT → CALIBRATING → IDLE → BALANCING → FALLEN → E_STOP |
+| `state_machine.h` | States INIT → CALIBRATING → IDLE → BALANCING → FALLEN → E_STOP, plus transition logic. Header-only (no `.cpp`) since it is enums + inline helpers. |
 | `main.cpp` | Setup, loop, serial command dispatch |
 
 `balance.cpp` (v1) and `src/*.cpp.bak` files are **frozen reference

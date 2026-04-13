@@ -35,3 +35,7 @@ Balancebot_code/messungen/processed/
 Balancebot_code/messungen/plots/
 Balancebot_code/messungen/archive/
 *.png
+!docs/images/*.png
+
+# Three.js HTML exports (too large for repo)
+*.html

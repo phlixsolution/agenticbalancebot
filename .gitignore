@@ -28,5 +28,10 @@ desktop.ini
 # FreeCAD backups (keep .FCStd, ignore autosave backups)
 *.FCBak
 
-# Measurement data (large CSVs and generated plots — keep raw data in messungen/ but not binaries)
+# Measurement data — raw CSVs and plots live on shared NextCloud, not in the repo.
+# Only results/ (processed summaries committed for reference) is tracked.
+Balancebot_code/messungen/raw/
+Balancebot_code/messungen/processed/
+Balancebot_code/messungen/plots/
+Balancebot_code/messungen/archive/
 *.png

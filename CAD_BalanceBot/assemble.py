@@ -101,10 +101,10 @@ def add_part(doc, name, shape, color, pos=(0,0,0), rot=None):
 
 doc = App.newDocument("BalanceBotAssembly")
 
-# ── 1. Carrier V4 ─────────────────────────────────────────────────────────────
+# ── 1. Bot Frame ──────────────────────────────────────────────────────────────
 # Body centered at world origin. Top face Z=+2, bottom Z=-30. Unchanged.
-add_part(doc, "carrierV4",
-         load_body(BASE + "/carrierV4.FCStd"),
+add_part(doc, "botframe",
+         load_body(BASE + "/botframe.FCStd"),
          color=(0.80, 0.80, 0.80),
          pos=(0.0, 0.0, 0.0))
 
@@ -214,6 +214,42 @@ add_part(doc, "Samsung_INR18650",
          load_step(BASE + "/Samsung INR18650-25R.stp"),
          color=(0.20, 0.20, 0.60),              # dark blue cell wrap
          pos=(0.0, -32.925, -13.15))
+
+# ── 11. Center of Mass marker ─────────────────────────────────────────────────
+DENSITY = {
+    "botframe": 1.04, "NANOMotorCarrier": 1.85, "Arduino_Nano33IoT": 1.85,
+    "Battery_18650": 2.70, "Samsung_INR18650": 2.75,
+    "motorhalter_R": 1.04, "motorhalter_L": 1.04,
+    "N20_motor_R": 4.50, "N20_motor_L": 4.50,
+    "Wheel_R_Hub": 1.04, "Wheel_R_Tire": 1.15,
+    "Wheel_L_Hub": 1.04, "Wheel_L_Tire": 1.15,
+}
+
+def _get_com(shape):
+    if hasattr(shape, "CenterOfMass"):
+        return shape.Volume, shape.CenterOfMass
+    sv = 0.0; sx = sy = sz = 0.0
+    for solid in shape.Solids:
+        sv += solid.Volume; c = solid.CenterOfMass
+        sx += c.x * solid.Volume; sy += c.y * solid.Volume; sz += c.z * solid.Volume
+    return sv, Vec(sx / sv, sy / sv, sz / sv)
+
+mcx = mcy = mcz = 0.0; mt = 0.0
+for obj in doc.Objects:
+    v, c = _get_com(obj.Shape)
+    rho = DENSITY.get(obj.Name, 1.0)
+    m = v * rho / 1000.0
+    mcx += c.x * m; mcy += c.y * m; mcz += c.z * m; mt += m
+
+com = Vec(mcx / mt, mcy / mt, mcz / mt)
+print("CoM (mass-weighted): (%.2f, %.2f, %.2f)  total=%.1f g" % (com.x, com.y, com.z, mt))
+
+com_sphere = Part.makeSphere(2.0, com)
+com_cross_x = Part.makeCylinder(0.4, 20.0, Vec(com.x - 10, com.y, com.z), Vec(1, 0, 0))
+com_cross_y = Part.makeCylinder(0.4, 20.0, Vec(com.x, com.y - 10, com.z), Vec(0, 1, 0))
+com_cross_z = Part.makeCylinder(0.4, 20.0, Vec(com.x, com.y, com.z - 10), Vec(0, 0, 1))
+com_marker = com_sphere.fuse(com_cross_x).fuse(com_cross_y).fuse(com_cross_z)
+add_part(doc, "CoM_Marker", com_marker, (1.0, 0.0, 0.0), pos=(0, 0, 0))
 
 # ── Save ──────────────────────────────────────────────────────────────────────
 doc.recompute()

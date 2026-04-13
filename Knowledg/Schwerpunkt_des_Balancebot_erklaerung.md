@@ -14,7 +14,112 @@ Physikalisch: Die Winkelfrequenz des inversen Pendels ist
 omega_0 = sqrt(m * g * h / J)
 ```
 
-wobei `h` = Abstand CoM zur Achse, `J` = Traegheitsmoment, `m` = Masse, `g` = Erdbeschleunigung. Ein hoeherer CoM erhoeht `h`, aber `J` waechst mit `h^2` — netto wird das System **traeger** und damit einfacher zu regeln.
+| Symbol | Beschreibung | Einheit |
+|--------|-------------|---------|
+| omega_0 | Eigenfrequenz des inversen Pendels | rad/s |
+| m | Gesamtmasse des Bots | kg |
+| g | Erdbeschleunigung (9.81) | m/s^2 |
+| h | Abstand CoM zur Radachse (vertikal) | m |
+| J | Traegheitsmoment um die Radachse | kg*m^2 |
+
+Ein hoeherer CoM erhoeht `h`, aber `J` waechst mit `h^2` — netto wird das System **traeger** und damit einfacher zu regeln.
+
+#### Herleitung von omega_0
+
+**Schritt 1 — Drehmoment durch Gravitation:**
+
+Wenn der Bot um einen kleinen Winkel θ aus der Vertikalen kippt, erzeugt die Schwerkraft ein Drehmoment um die Radachse:
+
+```
+tau = m * g * h * sin(theta)
+```
+
+| Symbol | Beschreibung | Einheit |
+|--------|-------------|---------|
+| tau | Drehmoment um die Radachse | N*m |
+| m | Gesamtmasse des Bots | kg |
+| g | Erdbeschleunigung (9.81) | m/s^2 |
+| h | Abstand CoM zur Radachse | m |
+| theta | Kippwinkel aus der Vertikalen | rad |
+
+**Schritt 2 — Newtons Rotationsgesetz:**
+
+```
+J * theta_ddot = tau
+```
+
+| Symbol | Beschreibung | Einheit |
+|--------|-------------|---------|
+| J | Traegheitsmoment um die Radachse | kg*m^2 |
+| theta_ddot | Winkelbeschleunigung | rad/s^2 |
+| tau | Drehmoment um die Radachse | N*m |
+
+Eingesetzt:
+
+```
+J * theta_ddot = m * g * h * sin(theta)
+```
+
+**Schritt 3 — Linearisierung fuer kleine Winkel** (`sin(theta) ≈ theta`):
+
+```
+J * theta_ddot = m * g * h * theta
+```
+
+Umgestellt:
+
+```
+theta_ddot = (m * g * h / J) * theta
+```
+
+Das ist eine Differentialgleichung der Form `theta_ddot = omega_0^2 * theta`, mit:
+
+```
+omega_0 = sqrt(m * g * h / J)
+```
+
+> **Vorzeichen-Hinweis:** Beim *normalen* Pendel (CoM unter der Achse) steht ein Minus: `theta_ddot = -omega_0^2 * theta` → harmonische Schwingung, stabil. Beim *inversen* Pendel (CoM ueber der Achse) ist das Vorzeichen positiv → exponentielles Wachstum, instabil. Genau deshalb braucht der BalanceBot einen aktiven Regler.
+
+#### Warum waechst J mit h²? — Steiner'scher Satz
+
+Jeder Koerper hat ein Traegheitsmoment `J_cm` um seinen eigenen Schwerpunkt. Wird die Drehachse um eine Strecke `h` vom Schwerpunkt weg verschoben (hier: zur Radachse), gilt der **Steiner'sche Satz** (parallel axis theorem):
+
+```
+J = J_cm + m * h^2
+```
+
+| Symbol | Beschreibung | Einheit |
+|--------|-------------|---------|
+| J | Traegheitsmoment um die Radachse | kg*m^2 |
+| J_cm | Traegheitsmoment um den eigenen Schwerpunkt | kg*m^2 |
+| m | Gesamtmasse des Bots | kg |
+| h | Abstand Schwerpunkt zur Radachse | m |
+
+Der Term `m * h^2` waechst **quadratisch** mit dem Abstand `h`.
+
+**Einsetzen in omega_0:**
+
+```
+omega_0 = sqrt(m * g * h / (J_cm + m * h^2))
+```
+
+Fuer den Fall, dass der Bot naeherungsweise eine Punktmasse im Abstand `h` ist (`J_cm` vernachlaessigbar klein gegenueber `m * h^2`):
+
+```
+omega_0 ≈ sqrt(m * g * h / (m * h^2))
+         = sqrt(g / h)
+```
+
+**Zentrales Ergebnis:**
+
+```
+omega_0 ≈ sqrt(g / h)
+```
+
+- `h` verdoppeln → omega_0 sinkt um Faktor sqrt(2) → Bot kippt **langsamer**
+- `h` halbieren → omega_0 steigt um Faktor sqrt(2) → Bot kippt **schneller**
+
+Deshalb ist ein hoher Schwerpunkt einfacher zu balancieren — genau wie ein langer Besenstiel vs. ein kurzer Bleistift.
 
 ### 2. Y-Offset (vor/hinter der Achse)
 
@@ -113,6 +218,13 @@ Berechnung:
 ```
 L_cog_von_A = (F_B * d_gesamt) / (F_A + F_B)
 ```
+
+| Symbol | Beschreibung | Einheit |
+|--------|-------------|---------|
+| L_cog_von_A | Abstand des CoM von Waage A | m |
+| F_A | Gewichtskraft auf Waage A | N |
+| F_B | Gewichtskraft auf Waage B | N |
+| d_gesamt | Abstand zwischen den beiden Waagen | m |
 
 Dies ergibt die horizontale CoM-Position. Den Bot 90 Grad drehen (aufrecht abstuetzen) und wiederholen, um die **vertikale CoM-Hoehe** zu bestimmen.
 

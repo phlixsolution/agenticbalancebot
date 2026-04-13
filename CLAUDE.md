@@ -139,6 +139,19 @@ Pass the phase via the `--mode` argument prefix or rename after recording. Times
 
 ---
 
+## Documentation style — formulas
+
+Every formula in `Knowledg/` and `docs/` must include a parameter table directly below, listing all symbols with name, description, and SI unit. Example format:
+
+```
+| Symbol | Beschreibung | Einheit |
+|--------|-------------|---------|
+| m      | Gesamtmasse des Bots | kg |
+```
+
+This ensures formulas are self-contained and readable without prior context.
+
+---
 ## What not to touch
 
 - `src/balance.cpp` (balance_v1) — reference implementation, kept for comparison

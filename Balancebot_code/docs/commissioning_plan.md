@@ -1,5 +1,15 @@
 # BalanceBot -- Inbetriebnahmeplan
 
+> **⚠️ BLOCKING FINDINGS (Python pipeline, 2026-04-13)**
+> Before recording any further measurements, fix the blocking issues in the data pipeline flagged by the code review:
+> 1. `analyze.py` — latent `UnboundLocalError` on `start` when a recording contains no balancing phase (crash).
+> 2. `acquire.py` — serial port leak on exception (port stays busy, next run fails).
+> 3. `acquire.py` — CSV header row dropped in carrier mode (downstream `df["col"]` access breaks).
+> 4. `config.py` — `os.makedirs()` runs at import time (test/lint side effects).
+> 5. Unused imports (ruff F401 will block CI once linting runs).
+>
+> Full report: [`docs/reviews/2026-04-13-code-review.md`](../../docs/reviews/2026-04-13-code-review.md)
+
 **Prinzip:** Jede Phase erst abschließen bevor die nächste beginnt.  
 **Sicherheit:** Bei jedem Motortest Räder in der Luft! Nur bei Phase 5+ frei stellen.
 
